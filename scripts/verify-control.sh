@@ -60,8 +60,12 @@ overall=true
 cleanup() {
   set +e
   echo "[$control_id] destroy"
-  (cd "$tf_dir" && terraform destroy -auto-approve -input=false "${tf_vars[@]}" >/dev/null) \
-    && record "terraform destroy" true || { record "terraform destroy" false; overall=false; }
+  if (cd "$tf_dir" && terraform destroy -auto-approve -input=false "${tf_vars[@]}" >/dev/null); then
+    record "terraform destroy" true
+  else
+    record "terraform destroy" false
+    overall=false
+  fi
   mkdir -p "$repo_root/verification"
   jq -n --arg id "$control_id" --arg slug "$slug" --argjson ok "$overall" \
         --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg acct "$account_id" \

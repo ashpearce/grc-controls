@@ -76,7 +76,7 @@ jobs:
           # Commit first, then rebase onto anything pushed meanwhile, then push.
           git add verification/
           git commit -m "verify(${{ matrix.control }}): $(jq -r '.verified' verification/${{ matrix.control }}.json) on $(date -u +%F)" || echo "Nothing new"
-          git pull --rebase
+          git pull --rebase --autostash
           git push
 
       - name: Fail the job if verification failed

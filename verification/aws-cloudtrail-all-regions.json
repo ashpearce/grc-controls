@@ -1,0 +1,41 @@
+{
+  "control_id": "HB-AWS-001",
+  "slug": "aws-cloudtrail-all-regions",
+  "verified": true,
+  "verified_at": "2026-09-12T20:44:04Z",
+  "sandbox_account": "670163018466",
+  "steps": [
+    {
+      "step": "terraform init",
+      "ok": true
+    },
+    {
+      "step": "terraform plan",
+      "ok": true
+    },
+    {
+      "step": "plan policy allows the plan",
+      "ok": true
+    },
+    {
+      "step": "terraform apply",
+      "ok": true
+    },
+    {
+      "step": "live policy passes after apply",
+      "ok": true
+    },
+    {
+      "step": "live policy catches the break",
+      "ok": true
+    },
+    {
+      "step": "live policy passes after restore",
+      "ok": true
+    },
+    {
+      "step": "terraform destroy",
+      "ok": true
+    }
+  ]
+}

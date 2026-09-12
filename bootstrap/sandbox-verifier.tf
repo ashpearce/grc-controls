@@ -7,6 +7,9 @@
 #   terraform init
 #   terraform apply -var="github_repository=your-org/grc-controls"
 #
+# If the account already has a GitHub OIDC provider (AWS allows one per account), add:
+#   -var="create_github_oidc_provider=false"
+#
 # Then save the two outputs as GitHub secrets:
 #   HB_SANDBOX_VERIFIER_ROLE_ARN  and  HB_SANDBOX_ACCOUNT_ID
 
@@ -29,12 +32,30 @@ variable "github_repository" {
   type        = string
 }
 
+variable "create_github_oidc_provider" {
+  description = "false if this account already has the GitHub OIDC provider; it will be looked up instead."
+  type        = bool
+  default     = true
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count = var.create_github_oidc_provider ? 1 : 0
+
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+}
+
+data "aws_iam_openid_connect_provider" "github" {
+  count = var.create_github_oidc_provider ? 0 : 1
+
+  url = "https://token.actions.githubusercontent.com"
+}
+
+locals {
+  github_oidc_provider_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
 }
 
 data "aws_iam_policy_document" "trust" {
@@ -44,7 +65,7 @@ data "aws_iam_policy_document" "trust" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [local.github_oidc_provider_arn]
     }
 
     condition {

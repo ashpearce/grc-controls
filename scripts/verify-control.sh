@@ -34,7 +34,11 @@ if [[ -z "${HB_SANDBOX_ACCOUNT_ID:-}" || "$account_id" != "$HB_SANDBOX_ACCOUNT_I
 fi
 
 # Turn verify_terraform_vars from the manifest into -var flags.
-mapfile -t tf_vars < <(jq -r '.verify_terraform_vars | to_entries[] | "-var=\(.key)=\(.value)"' "$manifest")
+# (a plain loop rather than mapfile, because macOS ships bash 3.2 which lacks it)
+tf_vars=()
+while IFS= read -r line; do
+  tf_vars+=("$line")
+done < <(jq -r '.verify_terraform_vars | to_entries[] | "-var=\(.key)=\(.value)"' "$manifest")
 
 steps=()
 record() { steps+=("{\"step\":\"$1\",\"ok\":$2}"); echo "[$control_id] $1 -> $([[ $2 == true ]] && echo PASS || echo FAIL)"; }
@@ -56,12 +60,8 @@ overall=true
 cleanup() {
   set +e
   echo "[$control_id] destroy"
-  if (cd "$tf_dir" && terraform destroy -auto-approve -input=false "${tf_vars[@]}" >/dev/null); then
-    record "terraform destroy" true
-  else
-    record "terraform destroy" false
-    overall=false
-  fi
+  (cd "$tf_dir" && terraform destroy -auto-approve -input=false "${tf_vars[@]}" >/dev/null) \
+    && record "terraform destroy" true || { record "terraform destroy" false; overall=false; }
   mkdir -p "$repo_root/verification"
   jq -n --arg id "$control_id" --arg slug "$slug" --argjson ok "$overall" \
         --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg acct "$account_id" \

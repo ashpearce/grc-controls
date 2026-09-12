@@ -73,9 +73,10 @@ jobs:
         run: |
           git config user.name "verify-bot"
           git config user.email "verify-bot@users.noreply.github.com"
-          git pull --rebase
+          # Commit first, then rebase onto anything pushed meanwhile, then push.
           git add verification/
           git commit -m "verify(${{ matrix.control }}): $(jq -r '.verified' verification/${{ matrix.control }}.json) on $(date -u +%F)" || echo "Nothing new"
+          git pull --rebase
           git push
 
       - name: Fail the job if verification failed

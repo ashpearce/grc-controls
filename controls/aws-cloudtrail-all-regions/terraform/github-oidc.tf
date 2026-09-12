@@ -26,6 +26,8 @@ data "aws_iam_openid_connect_provider" "github" {
 }
 
 locals {
+  github_owner             = split("/", var.github_repository)[0]
+  github_repo              = split("/", var.github_repository)[1]
   github_oidc_provider_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
 }
 
@@ -46,10 +48,15 @@ data "aws_iam_policy_document" "github_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Only the main branch. Two patterns because GitHub's sub claim now carries
+    # numeric ids ("repo:owner@123/name@456:ref:...") and older tokens do not.
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
+      values = [
+        "repo:${var.github_repository}:ref:refs/heads/main",
+        "repo:${local.github_owner}@*/${local.github_repo}@*:ref:refs/heads/main",
+      ]
     }
   }
 }

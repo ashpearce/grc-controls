@@ -40,6 +40,11 @@ variable "create_github_oidc_provider" {
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  github_owner = split("/", var.github_repository)[0]
+  github_repo  = split("/", var.github_repository)[1]
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   count = var.create_github_oidc_provider ? 1 : 0
 
@@ -75,10 +80,15 @@ data "aws_iam_policy_document" "trust" {
     }
 
     # Any branch of the repo may verify (so a pull request can prove a new control works).
+    # Two patterns because GitHub's sub claim now carries numeric ids
+    # ("repo:owner@123/name@456:ref:...") and older tokens do not ("repo:owner/name:ref:...").
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:*"]
+      values = [
+        "repo:${var.github_repository}:*",
+        "repo:${local.github_owner}@*/${local.github_repo}@*:*",
+      ]
     }
   }
 }

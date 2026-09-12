@@ -1,0 +1,14 @@
+{
+  "id": "HB-AWS-001",
+  "slug": "aws-cloudtrail-all-regions",
+  "title": "CloudTrail enabled in all regions",
+  "cloud": "aws",
+  "plan_query": "data.handbook.aws.cloudtrail_all_regions.plan.deny",
+  "live_query": "data.handbook.aws.cloudtrail_all_regions.live.result",
+  "verify_terraform_vars": {
+    "name_prefix": "hbverify",
+    "allow_bucket_destroy": true,
+    "create_github_oidc_provider": false,
+    "github_repository": "placeholder/placeholder"
+  }
+}

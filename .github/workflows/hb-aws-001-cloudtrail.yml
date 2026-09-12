@@ -1,0 +1,60 @@
+name: Evidence - HB-AWS-001 CloudTrail all regions
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # every day at 06:00 UTC
+  workflow_dispatch:       # and any time you press "Run workflow"
+
+permissions:
+  id-token: write   # lets the job ask GitHub for an identity token
+  contents: write   # lets the job commit the evidence file back
+
+jobs:
+  collect-evidence:
+    runs-on: ubuntu-latest
+    env:
+      CONTROL_DIR: controls/aws-cloudtrail-all-regions
+      EVIDENCE_DIR: evidence/aws-cloudtrail-all-regions
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Sign in to AWS with the read-only evidence role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_EVIDENCE_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Collect the live state of every trail
+        run: bash "$CONTROL_DIR/evidence/collect.sh" > /tmp/live.json
+
+      - name: Evaluate the control and write the evidence file
+        run: |
+          mkdir -p "$EVIDENCE_DIR"
+          stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          day="$(date -u +%F)"
+          opa eval --format json \
+            --input /tmp/live.json \
+            --data "$CONTROL_DIR/policy/live.rego" \
+            'data.handbook.aws.cloudtrail_all_regions.live.result' \
+            | jq --arg ts "$stamp" --arg sha "$GITHUB_SHA" --arg run "$GITHUB_RUN_ID" \
+                '.result[0].expressions[0].value + {collected_at: $ts, policy_commit: $sha, workflow_run: $run}' \
+            > "$EVIDENCE_DIR/$day.json"
+          cat "$EVIDENCE_DIR/$day.json"
+
+      - name: Commit the evidence file
+        run: |
+          git config user.name "evidence-bot"
+          git config user.email "evidence-bot@users.noreply.github.com"
+          git add "$EVIDENCE_DIR"
+          git commit -m "evidence(HB-AWS-001): $(date -u +%F)" || echo "Nothing new to commit"
+          git push
+
+      - name: Fail the run if the control is not compliant
+        run: jq -e '.compliant == true' "$EVIDENCE_DIR/$(date -u +%F).json"

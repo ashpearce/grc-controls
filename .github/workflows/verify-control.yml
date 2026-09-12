@@ -1,0 +1,82 @@
+name: Verify - live proof in the sandbox account
+
+# Builds a control for real in a throwaway AWS account, breaks it, watches the
+# policy catch it, repairs it, tears everything down, and commits the verdict
+# to verification/<slug>.json. Run it by hand for one control, or let the
+# weekly schedule re-verify every control so "it worked in March" stays true.
+on:
+  workflow_dispatch:
+    inputs:
+      control:
+        description: "Control slug (folder name under controls/), or 'all'"
+        required: true
+        default: "all"
+  schedule:
+    - cron: "0 7 * * 1"   # Mondays 07:00 UTC
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      controls: ${{ steps.pick.outputs.controls }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pick
+        run: |
+          if [[ "${{ github.event.inputs.control || 'all' }}" == "all" ]]; then
+            echo "controls=$(ls controls | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+          else
+            echo "controls=$(jq -c -n --arg c "${{ github.event.inputs.control }}" '[$c]')" >> "$GITHUB_OUTPUT"
+          fi
+
+  verify:
+    needs: list
+    runs-on: ubuntu-latest
+    # One control at a time so two verifications never fight over the same account.
+    concurrency: sandbox-verify
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        control: ${{ fromJson(needs.list.outputs.controls) }}
+    env:
+      HB_SANDBOX_ACCOUNT_ID: ${{ secrets.HB_SANDBOX_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to the SANDBOX account with the verifier role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.HB_SANDBOX_VERIFIER_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Verify ${{ matrix.control }}
+        id: verify
+        run: bash scripts/verify-control.sh "${{ matrix.control }}"
+        continue-on-error: true
+
+      - name: Commit the verdict
+        run: |
+          git config user.name "verify-bot"
+          git config user.email "verify-bot@users.noreply.github.com"
+          git pull --rebase
+          git add verification/
+          git commit -m "verify(${{ matrix.control }}): $(jq -r '.verified' verification/${{ matrix.control }}.json) on $(date -u +%F)" || echo "Nothing new"
+          git push
+
+      - name: Fail the job if verification failed
+        run: jq -e '.verified == true' "verification/${{ matrix.control }}.json"

@@ -1,0 +1,44 @@
+name: CI - fast checks
+
+# Runs on every push and pull request. No AWS access, finishes in about a minute.
+# If this is red, the control is not ready, full stop.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  fast-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Install shellcheck
+        run: sudo apt-get update -q && sudo apt-get install -y -q shellcheck
+
+      - name: Every control has every required file
+        run: make layout
+
+      - name: Formatting
+        run: make fmt
+
+      - name: Rego unit tests
+        run: make unit
+
+      - name: Terraform validate
+        run: make validate
+
+      - name: Shell lint
+        run: make lint

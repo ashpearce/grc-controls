@@ -1,10 +1,10 @@
 # Detective check: runs against what AWS says is true RIGHT NOW.
 # Input is produced by evidence/collect.sh. This is the file that becomes evidence.
-package handbook.aws.cloudtrail_all_regions.live
+package playbook.aws.cloudtrail_all_regions.live
 
 import rego.v1
 
-control_id := "HB-AWS-001"
+control_id := "PB-AWS-001"
 
 # A trail only counts if all four things are true at the same time.
 compliant_trails contains t.Name if {

@@ -6,7 +6,7 @@
     "seesaw-org-trail"
   ],
   "control": "CloudTrail enabled in all regions",
-  "control_id": "HB-AWS-001",
+  "control_id": "PB-AWS-001",
   "findings": [],
   "trails_evaluated": 2,
   "collected_at": "2026-09-14T14:42:06Z",

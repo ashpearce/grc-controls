@@ -1,10 +1,10 @@
 # Unit tests for live.rego. No AWS needed; runs in about a second.
 # Run with:  opa test controls -v
-package handbook.aws.cloudtrail_all_regions.live_test
+package playbook.aws.cloudtrail_all_regions.live_test
 
 import rego.v1
 
-import data.handbook.aws.cloudtrail_all_regions.live
+import data.playbook.aws.cloudtrail_all_regions.live
 
 # Shaped exactly like the output of evidence/collect.sh.
 healthy := {"account_id": "123456789012", "trails": [{
@@ -26,7 +26,7 @@ test_healthy_account_is_compliant if {
 }
 
 test_result_carries_control_identity if {
-	live.result.control_id == "HB-AWS-001" with input as healthy
+	live.result.control_id == "PB-AWS-001" with input as healthy
 	live.result.account_id == "123456789012" with input as healthy
 	live.result.trails_evaluated == 1 with input as healthy
 }
@@ -38,7 +38,7 @@ test_no_trails_is_not_compliant if {
 }
 
 test_stopped_trail_is_not_compliant if {
-	# The scenario from the handbook: trail exists, someone clicked Stop logging.
+	# The scenario from the playbook: trail exists, someone clicked Stop logging.
 	stopped := json.patch(healthy, [{"op": "replace", "path": "/trails/0/IsLogging", "value": false}])
 	not live.compliant with input as stopped
 	some msg in live.result.findings with input as stopped

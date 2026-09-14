@@ -1,10 +1,10 @@
 # Unit tests for plan.rego. No AWS needed; runs in about a second.
 # Run with:  opa test controls -v
-package handbook.aws.cloudtrail_all_regions.plan_test
+package playbook.aws.cloudtrail_all_regions.plan_test
 
 import rego.v1
 
-import data.handbook.aws.cloudtrail_all_regions.plan
+import data.playbook.aws.cloudtrail_all_regions.plan
 
 # A minimal slice of what `terraform show -json plan.out` produces.
 good_trail := {"resource_changes": [{
@@ -36,7 +36,7 @@ test_missing_trail_is_denied if {
 		"change": {"actions": ["create"], "after": {}},
 	}]}
 	not plan.allow with input as no_trail
-	"HB-AWS-001: the plan contains no aws_cloudtrail resource." in plan.deny with input as no_trail
+	"PB-AWS-001: the plan contains no aws_cloudtrail resource." in plan.deny with input as no_trail
 }
 
 test_single_region_trail_is_denied if {

@@ -1,7 +1,7 @@
 # grc-controls
 
-Companion repository for the GRC Engineering Handbook on [GRC Playground](https://grcplayground.com/handbook).
-Every control in the handbook is a folder here, and every folder is proven to work in three layers.
+Companion repository for the GRC Engineering Playbook on [GRC Playground](https://grcplayground.com/playbook).
+Every control in the playbook is a folder here, and every folder is proven to work in three layers.
 
 ## Layout
 

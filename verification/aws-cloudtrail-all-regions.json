@@ -1,5 +1,5 @@
 {
-  "control_id": "HB-AWS-001",
+  "control_id": "PB-AWS-001",
   "slug": "aws-cloudtrail-all-regions",
   "verified": true,
   "verified_at": "2026-09-14T13:37:27Z",

@@ -80,6 +80,8 @@ trap cleanup EXIT
 
 cd "$tf_dir"
 terraform init -input=false >/dev/null && record "terraform init" true
+# Own workspace (separate state), so a real deployment in this folder is never touched.
+terraform workspace select -or-create hbverify >/dev/null
 terraform plan -input=false -out="$work/plan.out" "${tf_vars[@]}" >/dev/null && record "terraform plan" true
 terraform show -json "$work/plan.out" > "$work/plan.json"
 

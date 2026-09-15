@@ -1,0 +1,15 @@
+{
+  "account_id": "670163018466",
+  "compliant": true,
+  "compliant_trails": [
+    "acme-health-intake-trail",
+    "seesaw-org-trail"
+  ],
+  "control": "CloudTrail enabled in all regions",
+  "control_id": "PB-AWS-001",
+  "findings": [],
+  "trails_evaluated": 2,
+  "collected_at": "2026-09-15T10:32:59Z",
+  "policy_commit": "17ccf9922859e072f5994f18e06885164d10abe7",
+  "workflow_run": "34958512541"
+}

@@ -1,0 +1,14 @@
+{
+  "account_id": "670163018466",
+  "compliant": false,
+  "compliant_trails": [],
+  "control": "CloudTrail enabled in all regions",
+  "control_id": "PB-AWS-001",
+  "findings": [
+    "No CloudTrail trails exist in this account."
+  ],
+  "trails_evaluated": 0,
+  "collected_at": "2026-10-20T10:30:03Z",
+  "policy_commit": "fcaa6a5ec7e34e834080414168c5682fd46a6502",
+  "workflow_run": "39408349420"
+}

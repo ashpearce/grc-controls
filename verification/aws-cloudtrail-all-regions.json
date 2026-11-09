@@ -2,7 +2,7 @@
   "control_id": "PB-AWS-001",
   "slug": "aws-cloudtrail-all-regions",
   "verified": true,
-  "verified_at": "2026-11-02T16:48:53Z",
+  "verified_at": "2026-11-09T17:08:40Z",
   "sandbox_account": "670163018466",
   "steps": [
     {
